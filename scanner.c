@@ -620,6 +620,18 @@ sql_failed:
 	return (ret != SQLITE_OK);
 }
 
+static int
+is_ignored(const char* dir)
+{
+	if (GETFLAG(IGNORE_NOMEDIA_MASK)) {
+		char ignore_path[PATH_MAX];
+		snprintf(ignore_path, PATH_MAX, "%s/.nomedia", dir);
+		return access(ignore_path, F_OK) == 0;
+	} else {
+		return 1;
+	}
+}
+
 static inline int
 filter_hidden(scan_filter *d)
 {
@@ -799,11 +811,15 @@ ScanDirectory(const char *dir, const char *parent, media_types dir_types)
 		}
 		if( (type == TYPE_DIR) && (access(full_path, R_OK|X_OK) == 0) )
 		{
-			char *parent_id;
-			insert_directory(name, full_path, BROWSEDIR_ID, THISORNUL(parent), i+startID);
-			xasprintf(&parent_id, "%s$%X", THISORNUL(parent), i+startID);
-			ScanDirectory(full_path, parent_id, dir_types);
-			free(parent_id);
+			if (is_ignored(full_path)) {
+				DPRINTF(E_INFO, L_SCANNER, "Skipping %s\n", full_path);
+			} else {
+				char *parent_id;
+				insert_directory(name, full_path, BROWSEDIR_ID, THISORNUL(parent), i+startID);
+				xasprintf(&parent_id, "%s$%X", THISORNUL(parent), i+startID);
+				ScanDirectory(full_path, parent_id, dir_types);
+				free(parent_id);
+			}
 		}
 		else if( type == TYPE_FILE && (access(full_path, R_OK) == 0) )
 		{

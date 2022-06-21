@@ -812,6 +812,10 @@ init(int argc, char **argv)
 			if (!strtobool(ary_options[i].value))
 				CLEARFLAG(SUBTITLES_MASK);
 			break;
+		case IGNORE_NOMEDIA:
+			if (strtobool(ary_options[i].value))
+				SETFLAG(IGNORE_NOMEDIA_MASK);
+			break;
 		default:
 			DPRINTF(E_ERROR, L_GENERAL, "Unknown option in file %s\n",
 				optionsfile);
